@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Interface Domain="Protocols.MqttBrokerService" AssemblyName="MIG-MqttBroker" SupportedPlatform="All">
+    <Options />
+</Interface>
