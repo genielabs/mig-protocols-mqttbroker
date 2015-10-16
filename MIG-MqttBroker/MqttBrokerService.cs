@@ -2,21 +2,21 @@ using System;
 
 using MIG;
 using MIG.Utility;
-using MIG.Interfaces.HomeAutomation.Commons;
 
 using uPLibrary.Networking.M2Mqtt;
 using System.Collections.Generic;
+using MIG.Config;
 
 namespace MIG.Interfaces.Protocols
 {
-    public class MqttBrokerService : MIGInterface
+    public class MqttBrokerService : MigInterface
     {
         private MqttBroker mqttService;
 
         #region MIG Interface members
 
-        public event Action<InterfaceModulesChangedAction> InterfaceModulesChangedAction;
-        public event Action<InterfacePropertyChangedAction> InterfacePropertyChangedAction;
+        public event InterfaceModulesChangedEventHandler InterfaceModulesChanged;
+        public event InterfacePropertyChangedEventHandler InterfacePropertyChanged;
 
         public string Domain
         {
@@ -30,7 +30,13 @@ namespace MIG.Interfaces.Protocols
 
         public bool IsEnabled { get; set; }
 
-        public List<MIGServiceConfiguration.Interface.Option> Options { get; set; }
+        public List<Option> Options { get; set; }
+
+        public void OnSetOption(Option option)
+        {
+            if (IsEnabled)
+                Connect();
+        }
 
         public List<InterfaceModule> GetModules()
         {
@@ -46,7 +52,7 @@ namespace MIG.Interfaces.Protocols
             }
         }
 
-        public object InterfaceControl(MIGInterfaceCommand request)
+        public object InterfaceControl(MigInterfaceCommand request)
         {
             return "";
         }
@@ -66,7 +72,7 @@ namespace MIG.Interfaces.Protocols
                 Console.WriteLine("MQTT Broker could not be started: " + e.Message);
                 Disconnect();
             }
-            if (InterfaceModulesChangedAction != null) InterfaceModulesChangedAction(new InterfaceModulesChangedAction() { Domain = this.Domain });
+            OnInterfaceModulesChanged(this.GetDomain());
             //
             return success;
         }
@@ -76,13 +82,29 @@ namespace MIG.Interfaces.Protocols
             try
             {
                 mqttService.Stop();
-            } catch { }
+            }
+            catch
+            {
+            }
             mqttService = null;
         }
 
         public bool IsDevicePresent()
         {
             return true;
+        }
+
+        #endregion
+
+        #region Events
+
+        protected virtual void OnInterfaceModulesChanged(string domain)
+        {
+            if (InterfaceModulesChanged != null)
+            {
+                var args = new InterfaceModulesChangedEventArgs(domain);
+                InterfaceModulesChanged(this, args);
+            }
         }
 
         #endregion
